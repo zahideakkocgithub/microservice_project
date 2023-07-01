@@ -5,6 +5,8 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class InventoryService {
     private final InventoryRepository inventoryRepository;
@@ -15,12 +17,12 @@ public class InventoryService {
 
     @Transactional(readOnly = true)
     @SneakyThrows
-    public boolean isInStock(String skuCode)
+    public boolean isInStock(List<String> skuCode)
     {
-        return true;
-     /*  if( inventoryRepository.findBySkuCodeIn(skuCode).size()>0)
+
+        if( inventoryRepository.findBySkuCodeIn(skuCode).size()>0)
             return true;
         else
-            return false;*/
+            return false;
     }
 }

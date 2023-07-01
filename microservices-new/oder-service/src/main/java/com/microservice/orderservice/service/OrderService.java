@@ -6,6 +6,7 @@ import com.microservice.orderservice.model.Order;
 import com.microservice.orderservice.model.OrderLineItems;
 import com.microservice.orderservice.repository.OrderRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -14,9 +15,11 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final WebClient.Builder webClient;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, WebClient.Builder webClient) {
         this.orderRepository = orderRepository;
+        this.webClient = webClient;
     }
 
     public void placeOrder(OrderRequest orderRequest)
@@ -36,7 +39,18 @@ public class OrderService {
         }
 
         order.setOrderLineItemsList(items);
-        orderRepository.save(order);
+
+        List<String> skuCodes= items.stream().map(OrderLineItems::getSkuCode).toList();
+
+       boolean result=  webClient.build().get().uri("http://inventory-service/api/inventory"
+                       ,uriBuilder -> uriBuilder.queryParam("skuCode",skuCodes).build()).retrieve().
+                bodyToMono(Boolean.class).block();
+
+       if(result==true) {
+           orderRepository.save(order);
+       }else{
+           throw  new IllegalArgumentException("Product is not in stock");
+       }
     }
 
 

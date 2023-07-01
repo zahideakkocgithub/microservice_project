@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface InventoryRepository extends JpaRepository<Inventory,Long> {
 
-  //  List<Inventory> findBySkuCodeIn(String skuCode);
+    List<Inventory> findBySkuCodeIn(List<String> skuCode);
 }
