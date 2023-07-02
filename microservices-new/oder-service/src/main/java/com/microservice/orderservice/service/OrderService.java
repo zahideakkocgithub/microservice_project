@@ -2,9 +2,11 @@ package com.microservice.orderservice.service;
 
 import com.microservice.orderservice.dto.OrderLineItemsDto;
 import com.microservice.orderservice.dto.OrderRequest;
+import com.microservice.orderservice.event.OrderPlaced;
 import com.microservice.orderservice.model.Order;
 import com.microservice.orderservice.model.OrderLineItems;
 import com.microservice.orderservice.repository.OrderRepository;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,10 +18,12 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClient;
+    private final KafkaTemplate<String, OrderPlaced> kafkaTemplate;
 
-    public OrderService(OrderRepository orderRepository, WebClient.Builder webClient) {
+    public OrderService(OrderRepository orderRepository, WebClient.Builder webClient, KafkaTemplate kafkaTemplate) {
         this.orderRepository = orderRepository;
         this.webClient = webClient;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     public void placeOrder(OrderRequest orderRequest)
@@ -48,6 +52,7 @@ public class OrderService {
 
        if(result==true) {
            orderRepository.save(order);
+           kafkaTemplate.send("notificationTopic",new OrderPlaced(order.getOrderNumber()));//producer
        }else{
            throw  new IllegalArgumentException("Product is not in stock");
        }
